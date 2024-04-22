@@ -1,0 +1,25 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.DS_Store
+.env
+*.pub
+
+# IDE files
+.idea/
+
+#tmp folder for docker data
+docker/data/*
+!docker/data/.gitkeep
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# exclude golangci-lint file every time we run the linter using make lint-full
+golangci-lint

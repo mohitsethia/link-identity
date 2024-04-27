@@ -26,6 +26,9 @@ func init() {
 		log.Println("Failed to connect to database")
 		panic(err.Error())
 	}
+	conn.Exec("CREATE DATABASE IF NOT EXISTS " + config.Values.Database.Name)
+	conn.Exec("USE " + config.Values.Database.Name)
+
 	// TODO: enable debug for dev and staging mode
 	conn.Logger = logger.Default.LogMode(logger.Info)
 	gormConn = conn
@@ -35,12 +38,11 @@ func init() {
 
 func getDSN() string {
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		"%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Local",
 		config.Values.Database.Username,
 		config.Values.Database.Password,
 		config.Values.Database.Host,
 		config.Values.Database.Port,
-		config.Values.Database.Name,
 	)
 	//dsn += config.Values.Database.Name + "?charset=utf8mb4&parseTime=True&loc=Local"
 	log.Println(dsn)

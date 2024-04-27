@@ -10,29 +10,34 @@ on:
     branches: [ "**" ]
 
 jobs:
-
   build:
+
     runs-on: ubuntu-latest
+
     env:
-      "database.name":"link_identity"
-      "database.host":"root"
-      "database.username":"root"
-      "database.pass":"root"
-      "database.port":"5432"
-      "server.port":"8000"
+      DATABASE_NAME: "link_identity"
+      DATABASE_HOST: "root"
+      DATABASE_USERNAME: "root"
+      DATABASE_PASS: "root"
+      DATABASE_PORT: "5432"
+      SERVER_PORT: "8000"
     steps:
-    - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.21.6'  # Specify the version of Go.
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
 
-    - name: Build
-      run: go build -v ./...
+      - name: Get dependencies
+        run: go get -v -t -d ./...
 
-    - name: Lint
-      run: make lint-full
+      - name: Build
+        run: go build ./...
 
-    - name: Run unittests
-      run: go test ./...
+      - name: Lint
+        run: make lint-full
+
+      - name: Run unittests
+        run: go test ./...

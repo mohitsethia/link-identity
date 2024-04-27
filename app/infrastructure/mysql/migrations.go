@@ -9,16 +9,10 @@ import (
 
 func RunMigrations(db *gorm.DB) {
 	m := []interface{}{
-		&domain.Customer{},
+		&domain.Contact{},
 	}
 	err := db.AutoMigrate(m...)
 	if err != nil {
 		log.Fatalf("error while connecting to the database %s", err)
 	}
-	//hashPassword, _ := utilities.HashPassword("admin")
-	//db.Create(&models.User{
-	//	Username: "admin",
-	//	Password: hashPassword,
-	//	Role:     "SUPER_ADMIN",
-	//})
 }

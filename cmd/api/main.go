@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/link-identity/app/infrastructure/mysql"
 	"log"
 	"net/http"
 	"os"
@@ -11,10 +10,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/link-identity/app/application"
 	appconfig "github.com/link-identity/app/config"
-	domain "github.com/link-identity/app/domain"
+	httpHandler "github.com/link-identity/app/http"
+	"github.com/link-identity/app/infrastructure"
+	"github.com/link-identity/app/infrastructure/mysql"
+	"github.com/link-identity/app/infrastructure/repository"
+	"github.com/link-identity/app/utils"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -31,23 +35,13 @@ var (
 func init() {
 	hostname, _ := os.Hostname()
 
-	level, err := zap.ParseAtomicLevel("debug")
-	if err != nil {
-		level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	}
-	config := zap.NewProductionConfig()
-	config.Level = level
-	config.EncoderConfig = getEncoderConfig()
-	logZap := zap.Must(config.Build())
+	logZap := infrastructure.NewLogger("debug")
 
 	logEntryZap = logZap.With(
 		zap.String("env", "dev"),
 		zap.String("pod_id", hostname),
 		zap.String("program", "link-identity"),
 		zap.String("channel", "http"),
-		zap.String("request_path", ""),
-		zap.String("remote_addr", ""),
-		zap.String("status_code", ""),
 	)
 }
 
@@ -58,8 +52,13 @@ func main() {
 	// setup database connection
 	db := mysql.NewDBConnection()
 
+	repo := repository.NewContactRepository(db)
+
+	service := application.NewService(repo)
+	handler := httpHandler.NewLinkIdentityHandler(service)
+
 	// setup the http server
-	router := SetupRouters(db)
+	router := SetupRouters(handler)
 
 	// service address will be changed as port in next PR.
 	srv := &http.Server{
@@ -92,6 +91,7 @@ func main() {
 		serverStopCtx()
 	}()
 	// Run the server
+	logEntryZap.Info("Starting application at port: " + appconfig.Values.Server.Port)
 	errServer := srv.ListenAndServe()
 	if errServer != nil && errServer != http.ErrServerClosed {
 		log.Fatal(errServer)
@@ -102,30 +102,27 @@ func main() {
 }
 
 // SetupRouters ...
-func SetupRouters(db *mysql.DbConn) *gin.Engine {
+func SetupRouters(handler *httpHandler.LinkIdentityHandler) *chi.Mux {
 	// Base route initialize.
-	router := gin.Default()
-	//router := chi.NewRouter()
+	router := chi.NewRouter()
+	router.Use(infrastructure.NewLoggerMiddleware(logEntryZap).Wrap)
 
 	//Health check registration
-	router.GET("/health/check", GetHealthCheck())
+	router.Get("/health/check", GetHealthCheck)
 
-	// Register customer get handler
+	// Register Contact get handler
 	{
-		//router.Group(func(r chi.Router) {
-		//})
+		router.Post("/identify", handler.Identify)
 	}
 	return router
 }
 
-func GetHealthCheck() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		res := map[string]interface{}{
-			"success": "true",
-			"message": "connected",
-		}
-		domain.HttpResponse(http.StatusOK).Data(res).Send(c)
+func GetHealthCheck(w http.ResponseWriter, r *http.Request) {
+	res := utils.ResponseDTO{
+		StatusCode: http.StatusOK,
+		Data:       "success",
 	}
+	utils.ResponseJSON(w, http.StatusOK, res)
 }
 
 // getEncoderConfig

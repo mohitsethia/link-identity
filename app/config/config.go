@@ -1,7 +1,10 @@
 package config
 
 import (
-	"github.com/spf13/viper"
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type config struct {
@@ -13,34 +16,26 @@ type config struct {
 var Values config
 
 func init() {
-	// TODO : Add once
-	viper.AddConfigPath(".")
-	viper.SetConfigName("app")
-	viper.SetConfigType("env")
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
+	// Load .env file
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err, "Error loading .env file")
 	}
-	if err := viper.Unmarshal(&Values); err != nil {
-		panic(err)
-	}
-	if Values.Server.Port == "" {
+	if Values.Server.Port = os.Getenv("server.port"); Values.Server.Port == "" {
 		panic("server port cannot be empty")
 	}
-	if Values.Database.Host == "" {
+	if Values.Database.Host = os.Getenv("database.host"); Values.Database.Host == "" {
 		panic("database host cannot be empty")
 	}
-	if Values.Database.Name == "" {
+	if Values.Database.Name = os.Getenv("database.name"); Values.Database.Name == "" {
 		panic("database name cannot be empty")
 	}
-	if Values.Database.Password == "" {
+	if Values.Database.Password = os.Getenv("database.pass"); Values.Database.Password == "" {
 		panic("database password cannot be empty")
 	}
-	if Values.Database.Username == "" {
+	if Values.Database.Username = os.Getenv("database.username"); Values.Database.Username == "" {
 		panic("database username cannot be empty")
 	}
-	if Values.Database.Port == "" {
+	if Values.Database.Port = os.Getenv("database.port"); Values.Database.Port == "" {
 		panic("database port cannot be empty")
 	}
 }

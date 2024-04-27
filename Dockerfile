@@ -26,7 +26,7 @@ RUN mkdir app
 # Get all the executables
 COPY --from=builder /app/link-identity-api /
 
-COPY app.env .
+COPY .env .
 
 # Create symlink to the application for this container.
 ARG APP_NAME=link-identity-api

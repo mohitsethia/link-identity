@@ -4,6 +4,7 @@ go 1.21.6
 
 require (
 	github.com/go-chi/chi v1.5.5
+	github.com/joho/godotenv v1.5.1
 	github.com/nyaruka/phonenumbers v1.3.4
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.18.2

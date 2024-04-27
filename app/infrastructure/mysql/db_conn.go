@@ -6,7 +6,7 @@ import (
 
 	"github.com/link-identity/app/config"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -21,7 +21,7 @@ var gormConn *gorm.DB
 func init() {
 	// TODO : Add once
 	dsn := getDSN()
-	conn, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	conn, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Println("Failed to connect to database")
 		panic(err.Error())
@@ -37,11 +37,19 @@ func init() {
 }
 
 func getDSN() string {
+	//dsn := fmt.Sprintf(
+	//	"%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Local",
+	//	config.Values.Database.Username,
+	//	config.Values.Database.Password,
+	//	config.Values.Database.Host,
+	//	config.Values.Database.Port,
+	//)
 	dsn := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/?charset=utf8mb4&parseTime=True&loc=Local",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/Berlin",
+		config.Values.Database.Host,
 		config.Values.Database.Username,
 		config.Values.Database.Password,
-		config.Values.Database.Host,
+		config.Values.Database.Name,
 		config.Values.Database.Port,
 	)
 	//dsn += config.Values.Database.Name + "?charset=utf8mb4&parseTime=True&loc=Local"

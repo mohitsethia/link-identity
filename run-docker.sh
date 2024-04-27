@@ -1,5 +1,7 @@
 #!/bin/bash
 
+docker-compose up -d
+
 # Build the Docker image and capture the output
 output=$(docker build --build-arg APP_NAME=link-identity-api .)
 

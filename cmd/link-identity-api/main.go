@@ -14,8 +14,8 @@ import (
 	appconfig "github.com/link-identity/app/config"
 	httpHandler "github.com/link-identity/app/http"
 	"github.com/link-identity/app/infrastructure"
-	"github.com/link-identity/app/infrastructure/mysql"
 	"github.com/link-identity/app/infrastructure/repository"
+	"github.com/link-identity/app/infrastructure/sql"
 	"github.com/link-identity/app/utils"
 
 	"github.com/go-chi/chi"
@@ -45,7 +45,7 @@ func main() {
 	defer logEntryZap.Sync()
 
 	// setup database connection
-	db := mysql.NewDBConnection()
+	db := sql.NewDBConnection()
 
 	repo := repository.NewContactRepository(db)
 

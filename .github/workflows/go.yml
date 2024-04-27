@@ -5,14 +5,21 @@ name: Go
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "**" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "**" ]
 
 jobs:
 
   build:
     runs-on: ubuntu-latest
+    env:
+      "database.name":"link_identity"
+      "database.host":"root"
+      "database.username":"root"
+      "database.pass":"root"
+      "database.port":"5432"
+      "server.port":"8000"
     steps:
     - uses: actions/checkout@v4
 
@@ -26,3 +33,6 @@ jobs:
 
     - name: Lint
       run: make lint-full
+
+    - name: Run unittests
+      run: go test ./...

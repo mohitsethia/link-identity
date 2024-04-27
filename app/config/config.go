@@ -18,7 +18,7 @@ var Values config
 func init() {
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
-		log.Fatal(err, "Error loading .env file")
+		log.Fatalf("Error loading .env file %s", err.Error())
 	}
 	if Values.Server.Port = os.Getenv("server.port"); Values.Server.Port == "" {
 		panic("server port cannot be empty")

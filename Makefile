@@ -1,4 +1,4 @@
-include golangci-lint.mk
+include ./scripts/make/golangci-lint.mk
 
 #include .env if exists
 -include .env
@@ -61,3 +61,6 @@ generate-coverage:
 	$(DC) $(GO) test --short -race -v ./... -count 1 -coverprofile cover.out . && go tool cover -html=cover.out -o cover.html && echo 'open in the browser the cover.html to see you branch coverage details'
 
 lint-full: .golangci-lint-full ## Run golangci-lint
+
+run-docker:
+	chmod +x run-docker.sh && bash run-docker.sh

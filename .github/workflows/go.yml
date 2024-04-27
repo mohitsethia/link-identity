@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      SKIP_DB_SETUP: true
       DATABASE_NAME: "link_identity"
       DATABASE_HOST: "root"
       DATABASE_USERNAME: "root"

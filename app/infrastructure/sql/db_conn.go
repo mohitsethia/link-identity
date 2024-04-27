@@ -3,6 +3,7 @@ package sql
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/link-identity/app/config"
 
@@ -19,6 +20,10 @@ type DbConn struct {
 var gormConn *gorm.DB
 
 func init() {
+	if os.Getenv("SKIP_DB_SETUP") == "true" {
+		log.Println("Skipping database setup and connection.")
+		return
+	}
 	// TODO : Add once
 	dsn := getDSN()
 	conn, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})

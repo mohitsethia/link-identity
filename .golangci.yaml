@@ -1,0 +1,65 @@
+# More info on config here: https://github.com/golangci/golangci-lint#config-file
+run:
+  deadline: 10m
+  issues-exit-code: 1
+  tests: true
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  golint:
+    min-confidence: 0
+  dupl:
+    threshold: 150
+  goconst:
+    min-len:         2
+    min-occurrences: 2
+  lll:
+    # max line length, lines longer will be reported. Default is 120.
+    # '\t' is counted as 1 character by default, and can be changed with the tab-width option
+    line-length: 120
+
+linters:
+  disable-all: true
+  enable:
+    - revive
+    - govet
+    - deadcode
+    - structcheck
+    - varcheck
+    - ineffassign
+    - typecheck
+    - goconst
+    - goimports
+    - staticcheck
+    - gosec
+    - lll
+    - unused
+
+issues:
+  max-issues-per-linter: 0
+  exclude-use-default: false
+  exclude:
+# gosec complaints about unhandled errors; cannot be handled by linters-settings
+    - "G104: Errors unhandled"
+# gosec crypto/md5 complaints
+    - "G401: Use of weak cryptographic primitive"
+    - "G501: Blacklisted import `crypto/md5`: weak cryptographic primitive"
+# golint complaints about package comments
+    - "should have a package comment"
+# disable govet checking for shadow declaration of errors
+    - "shadow: declaration of \"(err|ctx)\""
+  exclude-rules:
+    - path: _test\.go
+      # exclude test files from long-lines checking
+      linters:
+        - lll
+    # exclude comments from long-lines lint check
+    - linters:
+        - lll
+      source: "^\\s*// "

@@ -1,10 +1,8 @@
 package utils
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
 )
 
@@ -67,15 +65,6 @@ func NewErrorResponse(statusCode int, errorMsg string) *ErrorResponse {
 	return &e
 }
 
-// Deprecated: Use NewErrorWithDataResponse instead.
-// NewErrorWithTypeResponse ...
-func NewErrorWithTypeResponse(statusCode int, errorType string, errorMsg string) *ErrorResponse {
-	e := &ErrorResponse{StatusCode: statusCode}
-	e.Data.ExceptionType = errorType
-	e.Data.Message = errorMsg
-	return e
-}
-
 // NewErrorWithDataResponse instantiates and returns ErrorResponse object.
 func NewErrorWithDataResponse(statusCode int, data ErrorData) *ErrorResponse {
 	return &ErrorResponse{
@@ -91,17 +80,6 @@ func (e ErrorResponse) Error() string {
 // JSON ...
 func (e ErrorResponse) JSON() interface{} {
 	return e
-}
-
-// SendErrorResponse default error response callback
-func SendErrorResponse(ctx context.Context, w http.ResponseWriter, err error) {
-	errCause := errors.Cause(err)
-	if resp, ok := errCause.(*ErrorResponse); ok {
-		w.WriteHeader(resp.StatusCode)
-		if err = json.NewEncoder(w).Encode(resp); err != nil {
-			return
-		}
-	}
 }
 
 // ResponseError handles the error responses

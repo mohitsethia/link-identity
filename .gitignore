@@ -23,3 +23,6 @@ docker/data/*
 
 # exclude golangci-lint file every time we run the linter using make lint-full
 golangci-lint
+
+# binary
+link-identity-api

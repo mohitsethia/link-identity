@@ -10,6 +10,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	primaryPrecedence   = "primary"
+	secondaryPrecedence = "secondary"
+)
+
+// LinkIdentityService ...
 type LinkIdentityService interface {
 	Identify(ctx context.Context, email, phone string) ([]*domain.Contact, error)
 }
@@ -18,6 +24,7 @@ type service struct {
 	repo repository.ContactRepository
 }
 
+// NewService ...
 func NewService(contactRepo repository.ContactRepository) LinkIdentityService {
 	return &service{
 		repo: contactRepo,
@@ -38,41 +45,45 @@ func (s *service) Identify(ctx context.Context, email, phone string) ([]*domain.
 	contact := &domain.Contact{
 		Email:            sql.NullString{String: email, Valid: true},
 		Phone:            sql.NullString{String: phone, Valid: true},
-		LinkedPrecedence: "primary",
+		LinkedPrecedence: primaryPrecedence,
 	}
 
 	switch {
 	case existingContactByEmail != nil && existingContactByPhone != nil:
 		{
-			contact.LinkedPrecedence = "secondary"
-			if existingContactByPhone.ContactId == existingContactByEmail.ContactId {
-				contact.LinkedID = existingContactByEmail.ContactId
-				if existingContactByEmail.LinkedPrecedence == "secondary" {
+			contact.LinkedPrecedence = secondaryPrecedence
+			if existingContactByPhone.ContactID == existingContactByEmail.ContactID {
+				contact.LinkedID = existingContactByEmail.ContactID
+				if existingContactByEmail.LinkedPrecedence == secondaryPrecedence {
 					contact.LinkedID = existingContactByEmail.LinkedID
 				}
 			} else {
 				if existingContactByEmail.CreatedAt.After(*existingContactByPhone.CreatedAt) {
-					contact.LinkedID = existingContactByPhone.ContactId
-					if existingContactByPhone.LinkedPrecedence == "secondary" {
+					contact.LinkedID = existingContactByPhone.ContactID
+					if existingContactByPhone.LinkedPrecedence == secondaryPrecedence {
 						contact.LinkedID = existingContactByPhone.LinkedID
 					}
-					if existingContactByEmail.LinkedPrecedence == "primary" || existingContactByEmail.LinkedID != contact.LinkedID {
-						existingContactByEmail.LinkedPrecedence = "secondary"
+					if existingContactByEmail.LinkedPrecedence == primaryPrecedence ||
+						existingContactByEmail.LinkedID != contact.LinkedID {
+
+						existingContactByEmail.LinkedPrecedence = secondaryPrecedence
 						existingContactByEmail.LinkedID = contact.LinkedID
-						existingContactByEmail, err = s.repo.UpdateContact(ctx, existingContactByEmail)
+						_, err = s.repo.UpdateContact(ctx, existingContactByEmail)
 						if err != nil {
 							return nil, errors.Wrapf(err, "[Service][LinkIdentity] error while updating contact")
 						}
 					}
 				} else {
-					contact.LinkedID = existingContactByEmail.ContactId
-					if existingContactByEmail.LinkedPrecedence == "secondary" {
+					contact.LinkedID = existingContactByEmail.ContactID
+					if existingContactByEmail.LinkedPrecedence == secondaryPrecedence {
 						contact.LinkedID = existingContactByEmail.LinkedID
 					}
-					if existingContactByPhone.LinkedPrecedence == "primary" || existingContactByPhone.LinkedID != contact.LinkedID {
-						existingContactByPhone.LinkedPrecedence = "secondary"
+					if existingContactByPhone.LinkedPrecedence == primaryPrecedence ||
+						existingContactByPhone.LinkedID != contact.LinkedID {
+
+						existingContactByPhone.LinkedPrecedence = secondaryPrecedence
 						existingContactByPhone.LinkedID = contact.LinkedID
-						existingContactByPhone, err = s.repo.UpdateContact(ctx, existingContactByPhone)
+						_, err = s.repo.UpdateContact(ctx, existingContactByPhone)
 						if err != nil {
 							return nil, errors.Wrapf(err, "[Service][LinkIdentity] error while updating contact")
 						}
@@ -87,17 +98,17 @@ func (s *service) Identify(ctx context.Context, email, phone string) ([]*domain.
 		}
 	case existingContactByEmail != nil:
 		{
-			contact.LinkedPrecedence = "secondary"
-			contact.LinkedID = existingContactByEmail.ContactId
-			if existingContactByEmail.LinkedPrecedence == "secondary" {
+			contact.LinkedPrecedence = secondaryPrecedence
+			contact.LinkedID = existingContactByEmail.ContactID
+			if existingContactByEmail.LinkedPrecedence == secondaryPrecedence {
 				contact.LinkedID = existingContactByEmail.LinkedID
 			}
 		}
 	case existingContactByPhone != nil:
 		{
-			contact.LinkedPrecedence = "secondary"
-			contact.LinkedID = existingContactByPhone.ContactId
-			if existingContactByPhone.LinkedPrecedence == "secondary" {
+			contact.LinkedPrecedence = secondaryPrecedence
+			contact.LinkedID = existingContactByPhone.ContactID
+			if existingContactByPhone.LinkedPrecedence == secondaryPrecedence {
 				contact.LinkedID = existingContactByPhone.LinkedID
 			}
 		}
@@ -108,7 +119,7 @@ func (s *service) Identify(ctx context.Context, email, phone string) ([]*domain.
 		return nil, errors.Wrapf(err, "[Service][LinkIdentity] error while creating contact")
 	}
 
-	if contact.LinkedPrecedence == "primary" {
+	if contact.LinkedPrecedence == primaryPrecedence {
 		return []*domain.Contact{contact}, nil
 	}
 

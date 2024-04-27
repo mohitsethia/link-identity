@@ -20,14 +20,9 @@ import (
 
 	"github.com/go-chi/chi"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 var (
-	// commitHash should be set at compile time with current git hash
-	commitHash string
-	// tag should be set at compile time with current branch or tag
-	tag string
 	// zap logger instance
 	logEntryZap *zap.Logger
 )
@@ -76,7 +71,8 @@ func main() {
 	go func() {
 		<-sig
 		// Shutdown signal with grace period of 30 seconds
-		shutdownCtx, _ := context.WithTimeout(serverCtx, 30*time.Second)
+		shutdownCtx, Cancel := context.WithTimeout(serverCtx, 30*time.Second)
+		defer Cancel()
 		go func() {
 			<-shutdownCtx.Done()
 			if shutdownCtx.Err() == context.DeadlineExceeded {
@@ -109,6 +105,7 @@ func SetupRouters(handler *httpHandler.LinkIdentityHandler) *chi.Mux {
 
 	//Health check registration
 	router.Get("/health/check", GetHealthCheck)
+	router.Get("/", GetHealthCheck)
 
 	// Register Contact get handler
 	{
@@ -117,18 +114,11 @@ func SetupRouters(handler *httpHandler.LinkIdentityHandler) *chi.Mux {
 	return router
 }
 
-func GetHealthCheck(w http.ResponseWriter, r *http.Request) {
+// GetHealthCheck ...
+func GetHealthCheck(w http.ResponseWriter, _ *http.Request) {
 	res := utils.ResponseDTO{
 		StatusCode: http.StatusOK,
 		Data:       "success",
 	}
 	utils.ResponseJSON(w, http.StatusOK, res)
-}
-
-// getEncoderConfig
-func getEncoderConfig() zapcore.EncoderConfig {
-	encoderCfg := zap.NewProductionEncoderConfig()
-	encoderCfg.TimeKey = "timestamp"
-	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
-	return encoderCfg
 }

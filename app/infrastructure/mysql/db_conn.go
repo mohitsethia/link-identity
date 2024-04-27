@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+// DbConn ...
 type DbConn struct {
 	GormConn *gorm.DB
 }
@@ -46,6 +47,7 @@ func getDSN() string {
 	return dsn
 }
 
+// NewDBConnection ...
 func NewDBConnection() *DbConn {
 	return &DbConn{
 		GormConn: gormConn,

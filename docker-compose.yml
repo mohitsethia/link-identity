@@ -1,0 +1,14 @@
+version: "3.5"
+
+services:
+  mysql:
+    image: mysql:8.3.0
+     # If you are a user of Apple silicon M1 chip, uncomment platform setting
+    platform: linux/amd64
+    volumes:
+      - ${DATA_DIR}/mysql:/var/lib/mysql:cached
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: "link_identity"

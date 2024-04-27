@@ -1,12 +1,14 @@
 package mysql
 
 import (
-	"github.com/link-identity/app/domain"
 	"log"
+
+	"github.com/link-identity/app/domain"
 
 	"gorm.io/gorm"
 )
 
+// RunMigrations ...
 func RunMigrations(db *gorm.DB) {
 	m := []interface{}{
 		&domain.Contact{},

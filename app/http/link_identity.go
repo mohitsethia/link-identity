@@ -42,6 +42,7 @@ func NewLinkIdentityHandler(service application.LinkIdentityService) *LinkIdenti
 	}
 }
 
+// Identify ...
 func (h *LinkIdentityHandler) Identify(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -72,6 +73,7 @@ func (h *LinkIdentityHandler) Identify(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// Validate ...
 func (v *RequestDTO) Validate() *utils.ErrorResponse {
 	if v.Email != "" {
 		if _, err := mail.ParseAddress(v.Email); err != nil {
@@ -105,11 +107,11 @@ func convertContactsToResponseDTO(contacts []*domain.Contact) *ResponseDTO {
 
 	for _, v := range contacts {
 		if v.LinkedPrecedence == "primary" {
-			primaryContactID = v.ContactId
+			primaryContactID = v.ContactID
 			primaryEmail = v.Email.String
 			primaryPhone = v.Phone.String
 		} else {
-			secondaryIds = append(secondaryIds, v.ContactId)
+			secondaryIds = append(secondaryIds, v.ContactID)
 			secondaryEmails[v.Email.String] = true
 			secondaryPhones[v.Phone.String] = true
 		}
@@ -133,7 +135,7 @@ func convertContactsToResponseDTO(contacts []*domain.Contact) *ResponseDTO {
 
 func convertMapToArray(m map[string]bool) []string {
 	var arr []string
-	for k, _ := range m {
+	for k := range m {
 		arr = append(arr, k)
 	}
 	return arr

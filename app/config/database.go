@@ -1,5 +1,6 @@
 package config
 
+// DatabaseConfig ...
 type DatabaseConfig struct {
 	Host     string `mapstructure:"db_host"`
 	Port     string `mapstructure:"db_port"`

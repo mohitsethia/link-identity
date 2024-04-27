@@ -9,9 +9,8 @@ type config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 }
 
+// Values ...
 var Values config
-
-var DefaultServerPort = "8000"
 
 func init() {
 	// TODO : Add once
@@ -25,5 +24,23 @@ func init() {
 	}
 	if err := viper.Unmarshal(&Values); err != nil {
 		panic(err)
+	}
+	if Values.Server.Port == "" {
+		panic("server port cannot be empty")
+	}
+	if Values.Database.Host == "" {
+		panic("database host cannot be empty")
+	}
+	if Values.Database.Name == "" {
+		panic("database name cannot be empty")
+	}
+	if Values.Database.Password == "" {
+		panic("database password cannot be empty")
+	}
+	if Values.Database.Username == "" {
+		panic("database username cannot be empty")
+	}
+	if Values.Database.Port == "" {
+		panic("database port cannot be empty")
 	}
 }

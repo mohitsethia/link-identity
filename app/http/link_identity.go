@@ -96,27 +96,27 @@ func (v *RequestDTO) Validate() *utils.ErrorResponse {
 }
 
 func convertContactsToResponseDTO(contacts []*domain.Contact) *ResponseDTO {
-	var linkedId uint
+	var primaryContactID uint
 	var secondaryIds []uint
-	var secondaryEmails []string
-	var secondaryPhones []string
+	secondaryEmails := make(map[string]bool)
+	secondaryPhones := make(map[string]bool)
 	var primaryEmail string
 	var primaryPhone string
 
 	for _, v := range contacts {
 		if v.LinkedPrecedence == "primary" {
-			linkedId = v.ContactId
+			primaryContactID = v.ContactId
 			primaryEmail = v.Email.String
 			primaryPhone = v.Phone.String
 		} else {
 			secondaryIds = append(secondaryIds, v.ContactId)
-			secondaryEmails = append(secondaryEmails, v.Email.String)
-			secondaryPhones = append(secondaryPhones, v.Phone.String)
+			secondaryEmails[v.Email.String] = true
+			secondaryPhones[v.Phone.String] = true
 		}
 	}
 
-	secondaryEmails = remove(secondaryEmails, primaryEmail)
-	secondaryPhones = remove(secondaryPhones, primaryPhone)
+	delete(secondaryEmails, primaryEmail)
+	delete(secondaryPhones, primaryPhone)
 
 	return &ResponseDTO{Contact: struct {
 		PrimaryContactID    uint     `json:"PrimaryContactID"`
@@ -124,19 +124,17 @@ func convertContactsToResponseDTO(contacts []*domain.Contact) *ResponseDTO {
 		PhoneNumbers        []string `json:"phoneNumbers"`
 		SecondaryContactIds []uint   `json:"secondaryContactIds"`
 	}{
-		PrimaryContactID:    linkedId,
-		Emails:              append([]string{primaryEmail}, secondaryEmails...),
-		PhoneNumbers:        append([]string{primaryPhone}, secondaryPhones...),
+		PrimaryContactID:    primaryContactID,
+		Emails:              append([]string{primaryEmail}, convertMapToArray(secondaryEmails)...),
+		PhoneNumbers:        append([]string{primaryPhone}, convertMapToArray(secondaryPhones)...),
 		SecondaryContactIds: secondaryIds,
 	}}
 }
 
-func remove(slice []string, val string) []string {
+func convertMapToArray(m map[string]bool) []string {
 	var arr []string
-	for _, v := range slice {
-		if v != val {
-			arr = append(arr, v)
-		}
+	for k, _ := range m {
+		arr = append(arr, k)
 	}
 	return arr
 }

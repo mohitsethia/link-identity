@@ -56,13 +56,34 @@ func (s *service) Identify(ctx context.Context, email, phone string) ([]*domain.
 					if existingContactByPhone.LinkedPrecedence == "secondary" {
 						contact.LinkedID = existingContactByPhone.LinkedID
 					}
+					if existingContactByEmail.LinkedPrecedence == "primary" || existingContactByEmail.LinkedID != contact.LinkedID {
+						existingContactByEmail.LinkedPrecedence = "secondary"
+						existingContactByEmail.LinkedID = contact.LinkedID
+						existingContactByEmail, err = s.repo.UpdateContact(ctx, existingContactByEmail)
+						if err != nil {
+							return nil, errors.Wrapf(err, "[Service][LinkIdentity] error while updating contact")
+						}
+					}
 				} else {
 					contact.LinkedID = existingContactByEmail.ContactId
 					if existingContactByEmail.LinkedPrecedence == "secondary" {
 						contact.LinkedID = existingContactByEmail.LinkedID
 					}
+					if existingContactByPhone.LinkedPrecedence == "primary" || existingContactByPhone.LinkedID != contact.LinkedID {
+						existingContactByPhone.LinkedPrecedence = "secondary"
+						existingContactByPhone.LinkedID = contact.LinkedID
+						existingContactByPhone, err = s.repo.UpdateContact(ctx, existingContactByPhone)
+						if err != nil {
+							return nil, errors.Wrapf(err, "[Service][LinkIdentity] error while updating contact")
+						}
+					}
 				}
 			}
+			secondaryContacts, err := s.repo.GetAllSecondaryContacts(ctx, contact.LinkedID)
+			if err != nil {
+				return nil, errors.Wrapf(err, "[Service][LinkIdentity] error while getting secondary contacts")
+			}
+			return secondaryContacts, nil
 		}
 	case existingContactByEmail != nil:
 		{

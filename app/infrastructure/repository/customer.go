@@ -15,6 +15,7 @@ type ContactRepository interface {
 	GetAllSecondaryContacts(ctx context.Context, linkedID uint) ([]*domain.Contact, error)
 	GetPrimaryContactFromLinkedID(ctx context.Context, linkedId uint) (*domain.Contact, error)
 	CreateContact(ctx context.Context, contact *domain.Contact) (*domain.Contact, error)
+	UpdateContact(ctx context.Context, contact *domain.Contact) (*domain.Contact, error)
 }
 
 type contactDBRepo struct {
@@ -95,6 +96,15 @@ func (r *contactDBRepo) GetPrimaryContactFromLinkedID(ctx context.Context, linke
 func (r *contactDBRepo) CreateContact(ctx context.Context, contact *domain.Contact) (*domain.Contact, error) {
 	db := r.db.GormConn
 	rows := db.WithContext(ctx).Create(contact)
+	if rows != nil && rows.Error != nil {
+		return nil, errors.Wrapf(rows.Error, "[Repository] error while creating a contact")
+	}
+	return contact, nil
+}
+
+func (r *contactDBRepo) UpdateContact(ctx context.Context, contact *domain.Contact) (*domain.Contact, error) {
+	db := r.db.GormConn
+	rows := db.WithContext(ctx).Where("contact_id = ?", contact.ContactId).Updates(contact)
 	if rows != nil && rows.Error != nil {
 		return nil, errors.Wrapf(rows.Error, "[Repository] error while creating a contact")
 	}

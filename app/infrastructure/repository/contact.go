@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/link-identity/app/domain"
-	"github.com/link-identity/app/infrastructure/mysql"
+	"github.com/link-identity/app/infrastructure/sql"
 
 	"github.com/pkg/errors"
 )
@@ -21,11 +21,11 @@ type ContactRepository interface {
 }
 
 type contactDBRepo struct {
-	db *mysql.DbConn
+	db *sql.DbConn
 }
 
 // NewContactRepository ...
-func NewContactRepository(db *mysql.DbConn) ContactRepository {
+func NewContactRepository(db *sql.DbConn) ContactRepository {
 	return &contactDBRepo{
 		db: db,
 	}

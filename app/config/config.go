@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 )
@@ -17,8 +18,27 @@ var Values config
 
 func init() {
 	// Load .env file
-	if err := godotenv.Load(); err != nil {
-		log.Fatal(err, "Error loading .env file")
+	// Define a slice of possible locations for the .env file
+	possiblePaths := []string{
+		"./.env",     // Current directory
+		"../.env",    // Parent directory
+		"$HOME/.env", // Home directory
+		".env",
+		"../../.env",
+		filepath.Join(
+			os.Getenv("GOPATH"),
+			"src", "github.com", "mohitsethia", "link-identity", ".env"), // Go project directory
+	}
+
+	// Try each path and load the first .env file found
+	var err error
+	for _, path := range possiblePaths {
+		if err = godotenv.Load(filepath.Clean(os.ExpandEnv(path))); err == nil {
+			break
+		}
+	}
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
 	}
 	if Values.Server.Port = os.Getenv("server.port"); Values.Server.Port == "" {
 		panic("server port cannot be empty")

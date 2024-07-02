@@ -19,31 +19,29 @@ import (
 	"github.com/link-identity/app/utils"
 
 	"github.com/go-chi/chi"
-	"go.uber.org/zap"
+	"github.com/sirupsen/logrus"
 )
 
 var (
 	// zap logger instance
-	logEntryZap *zap.Logger
+	logEntry *logrus.Entry
 )
 
 func init() {
+	logger := infrastructure.NewLogger(os.Stdout, "info", "test")
 	hostname, _ := os.Hostname()
-
-	logZap := infrastructure.NewLogger("debug")
-
-	logEntryZap = logZap.With(
-		zap.String("env", "dev"),
-		zap.String("pod_id", hostname),
-		zap.String("program", "link-identity"),
-		zap.String("channel", "http"),
-	)
+	logEntry = logger.WithFields(logrus.Fields{
+		"env":          "test",
+		"pod_id":       hostname,
+		"program":      "test-app",
+		"channel":      "http",
+		"request_path": "",
+		"remote_addr":  "",
+		"status_code":  "",
+	})
 }
 
 func main() {
-	// logger defers
-	defer logEntryZap.Sync()
-
 	// setup database connection
 	db := sql.NewDBConnection()
 
@@ -87,21 +85,21 @@ func main() {
 		serverStopCtx()
 	}()
 	// Run the server
-	logEntryZap.Info("Starting application at port: " + appconfig.Values.Server.Port)
+	logEntry.Info("Starting application at port: " + appconfig.Values.Server.Port)
 	errServer := srv.ListenAndServe()
 	if errServer != nil && errServer != http.ErrServerClosed {
 		log.Fatal(errServer)
 	}
 	// Wait for server context to be stopped
 	<-serverCtx.Done()
-	logEntryZap.Info("Application stopped gracefully!")
+	logEntry.Info("Application stopped gracefully!")
 }
 
 // SetupRouters ...
 func SetupRouters(handler *httpHandler.LinkIdentityHandler) *chi.Mux {
 	// Base route initialize.
 	router := chi.NewRouter()
-	router.Use(infrastructure.NewLoggerMiddleware(logEntryZap).Wrap)
+	router.Use(infrastructure.NewLoggerMiddleware(logEntry).Wrap)
 
 	//Health check registration
 	router.Get("/health/check", GetHealthCheck)

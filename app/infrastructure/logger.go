@@ -6,40 +6,51 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"net"
 	"net/http"
 	"sync"
 	"time"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"github.com/sirupsen/logrus"
 )
 
 // logMu is a mutex to control changes on watson.LogData
 var logMu sync.RWMutex
 
 // NewLogger create a new logger instance
-func NewLogger(logLevel string) *zap.Logger {
-	ll, err := zap.ParseAtomicLevel(logLevel)
+func NewLogger(out io.Writer, logLevel string, env string) *logrus.Logger {
+	log := logrus.New()
+	log.Out = out
+	log.Formatter = getJSONFormatter(env)
+	level, err := logrus.ParseLevel(logLevel)
 	if err != nil {
-		ll = zap.NewAtomicLevelAt(zap.DebugLevel)
+		level = logrus.DebugLevel
 	}
-	config := zap.NewProductionConfig()
-	config.Level = ll
-	config.EncoderConfig = getEncoderConfig()
-	return zap.Must(config.Build())
+	log.Level = level
+
+	return log
 }
 
-// getEncoderConfig
-func getEncoderConfig() zapcore.EncoderConfig {
-	encoderCfg := zap.NewProductionEncoderConfig()
-	encoderCfg.TimeKey = "timestamp"
-	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
-	return encoderCfg
+// JSONFormatter Wrapper for logrus.JSONFormatter
+type JSONFormatter struct {
+	logrus.JSONFormatter
+}
+
+// getJSONFormatter
+func getJSONFormatter(env string) *JSONFormatter {
+	jsonFormatter := logrus.JSONFormatter{
+		TimestampFormat: "2006-01-02T15:04:05-0700",
+		FieldMap: logrus.FieldMap{
+			logrus.FieldKeyTime: "@timestamp",
+		},
+		PrettyPrint: env == "dev",
+	}
+	return &JSONFormatter{jsonFormatter}
 }
 
 type loggerMiddleware struct {
-	logger *zap.Logger
+	logger *logrus.Entry
 }
 
 // Middleware specify a interface to http calls
@@ -48,7 +59,7 @@ type Middleware interface {
 }
 
 // NewLoggerMiddleware ...
-func NewLoggerMiddleware(logEntry *zap.Logger) Middleware {
+func NewLoggerMiddleware(logEntry *logrus.Entry) Middleware {
 	return &loggerMiddleware{
 		logger: logEntry,
 	}
@@ -69,24 +80,20 @@ func (lmw *loggerMiddleware) Wrap(next http.Handler) http.Handler {
 		// copy log data
 		ld := LogData(r.Context())
 		ld["status_code"] = lr.StatusCode
-		ld["response_time"] = fmt.Sprintf("%fms", float64(elapsed)/float64(time.Millisecond))
+		ld["response_time"] = elapsed.Milliseconds()
 		ld["request_path"] = r.RequestURI
 		ld["remote_addr"] = r.RemoteAddr
 
-		var logLevel zapcore.Level
-		var logAttr []zapcore.Field
+		var logLevel logrus.Level
 		switch statusCode := lr.StatusCode; {
 		case statusCode >= http.StatusInternalServerError:
-			logLevel = zap.ErrorLevel
+			logLevel = logrus.ErrorLevel
 		case statusCode >= http.StatusMultipleChoices && statusCode < http.StatusInternalServerError:
-			logLevel = zap.WarnLevel
+			logLevel = logrus.WarnLevel
 		default:
-			logLevel = zap.InfoLevel
+			logLevel = logrus.InfoLevel
 		}
-		for key, value := range ld {
-			logAttr = append(logAttr, zap.Any(key, value))
-		}
-		lmw.logger.With(logAttr...).Log(logLevel, fmt.Sprintf("[%s]", r.Method))
+		lmw.logger.WithFields(ld).Logf(logLevel, fmt.Sprintf("[%s] %s", r.Method, r.RequestURI))
 	}
 
 	return http.HandlerFunc(fn)
@@ -94,12 +101,12 @@ func (lmw *loggerMiddleware) Wrap(next http.Handler) http.Handler {
 
 // CoreLogger ...
 type CoreLogger struct {
-	logger *zap.Logger
+	logger *logrus.Entry
 }
 
 // Printf ...
 func (c *CoreLogger) Printf(format string, v ...interface{}) {
-	c.logger.Sugar().Infof(format, v...)
+	c.logger.Infof(format, v...)
 }
 
 // Logger is the interface used internally to log

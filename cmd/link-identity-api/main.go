@@ -47,13 +47,16 @@ func main() {
 
 	repo := repository.NewContactRepository(db)
 
-	service := application.NewService(repo)
-	handler := httpHandler.NewLinkIdentityHandler(service)
+	identityService := application.NewService(repo)
+	identityHandler := httpHandler.NewLinkIdentityHandler(identityService)
+
+	locationService := application.NewLocationService()
+	locationHandler := httpHandler.NewLocationHandler(locationService)
 
 	// setup the http server
-	router := SetupRouters(handler)
+	router := SetupRouters(identityHandler, locationHandler)
 
-	// service address will be changed as port in next PR.
+	// identityService address will be changed as port in next PR.
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", appconfig.Values.Server.Port),
 		ReadTimeout:  10 * time.Second,
@@ -96,7 +99,7 @@ func main() {
 }
 
 // SetupRouters ...
-func SetupRouters(handler *httpHandler.LinkIdentityHandler) *chi.Mux {
+func SetupRouters(identityHandler *httpHandler.LinkIdentityHandler, locationHandler *httpHandler.LocationHandler) *chi.Mux {
 	// Base route initialize.
 	router := chi.NewRouter()
 	router.Use(infrastructure.NewLoggerMiddleware(logEntry).Wrap)
@@ -107,7 +110,16 @@ func SetupRouters(handler *httpHandler.LinkIdentityHandler) *chi.Mux {
 
 	// Register Contact get handler
 	{
-		router.Post("/identify", handler.Identify)
+		router.Post("/identify", identityHandler.Identify)
+	}
+
+	// location handler
+	{
+		//'localhost:8080/location/
+		//steve?max=3
+		router.Get("/location/{rider}", locationHandler.GetLastNLocation)
+		//'localhost:8080/location/steve/now'
+		router.Post("/location/{rider}/now", locationHandler.UpdateLocation)
 	}
 	return router
 }
